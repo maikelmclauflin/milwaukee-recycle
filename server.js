@@ -23,7 +23,7 @@ app.listen(PORT, (err) => {
 })
 
 async function worker() {
-  const url = `http://${HOST}/wake-up`
+  const url = `${HOST}/wake-up`
   await request.get(url)
   build()
 }
