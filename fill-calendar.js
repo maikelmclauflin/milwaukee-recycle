@@ -1,19 +1,21 @@
 const { google } = require('googleapis')
+const { loggers } = require('./debug')
 const auth = require('./auth')
 const fetch = require('./fetch')
 module.exports = main
 
-async function main(location) {
+async function main(address) {
   const authenticated = await auth()
   const calendar = google.calendar({
     version: 'v3', 
     auth: authenticated,
   })
+  loggers.fillCalendar('filling')
   const calendars = await listCalendars(calendar)
   const garbageCalendar = findGarbageCalendar(calendars.items)
   const { id, timeZone } = garbageCalendar
   const { items: events } = await listEvents(calendar, id)
-  const nextPickups = await fetch(location.city, location.address)
+  const nextPickups = await fetch(address)
   const garbageIsOnCalendar = checkIsOnCalendar(events, nextPickups, 'garbage')
   const recyclingIsOnCalendar = checkIsOnCalendar(events, nextPickups, 'recycling')
   const eventsToCreate = []
@@ -65,7 +67,7 @@ async function insertMissingEvents(calendar, id, events) {
     timeZone,
     description
   }) => {
-    const start = new Date(date - (6 * HOUR))
+    const start = new Date(+date - (6 * HOUR))
     const end = new Date(+date + (9 * HOUR))
     const payload = {
       calendarId: id,
@@ -82,6 +84,7 @@ async function insertMissingEvents(calendar, id, events) {
         }
       }
     }
+    loggers.fillCalendar(payload)
     return calendar.events.insert(payload)
   }))
 }
@@ -131,8 +134,4 @@ function listEvents(calendar, id) {
 
 function findGarbageCalendar(calendars) {
   return calendars.find(({ summary }) => summary.toLowerCase().indexOf('garbage') >= 0)
-}
-
-function timeout(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }

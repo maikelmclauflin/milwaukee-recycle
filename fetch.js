@@ -1,5 +1,6 @@
 const cheerio = require('cheerio')
 const { v5: uuidV5 } = require('uuid')
+const { loggers } = require('./debug')
 const request = require('request-promise-native')
 const parser = require('parse-address')
 const parsers = {
@@ -7,20 +8,19 @@ const parsers = {
 }
 module.exports = main
 
-async function main(city, address) {
-  const parser = parsers[city.toLowerCase()]
-  return parser(city, address)
+async function main(address) {
+  const parsed = parser.parseLocation(address)
+  const cityParser = parsers[parsed.city.toLowerCase()]
+  return cityParser(parsed.city, parsed)
 }
 
-async function milwaukeeParseAndSubmit(city, address) {
-  const parsed = parser.parseLocation(address)
-  const payload = {
+async function milwaukeeParseAndSubmit(city, parsed) {
+  return milwaukeeSubmit(city, {
     laddr: parsed.number,
     sdir: parsed.prefix.toUpperCase(),
     sname: parsed.street.toUpperCase(),
     stype: parsed.type.toUpperCase()
-  }
-  return milwaukeeSubmit(city, payload)
+  })
 }
   
 async function milwaukeeSubmit(city, payload) {
@@ -32,20 +32,19 @@ async function milwaukeeSubmit(city, payload) {
   const $1headerStrongs = $1header.nextAll('strong')
   const $2header = $header.eq(1)
   const $2headerStrongs = $2header.nextAll('strong')
-  const garbageID = $1headerStrongs.eq(0).text()
-  const recyclingID = $2headerStrongs.eq(0).text()
+  // const garbageID = $1headerStrongs.eq(0).text()
+  // const recyclingID = $2headerStrongs.eq(0).text()
   let garbageDate = $1headerStrongs.eq(1).text()
   let recyclingDate = $2headerStrongs.eq(1).text()
   garbageDate = garbageDate.split(' ').slice(1).join(' ')
   recyclingDate = recyclingDate.split(' ').slice(1).join(' ')
-  console.log(`
-GARBAGE  \tID: ${garbageID}\tDATE: ${garbageDate}
-RECYCLING\tID: ${recyclingID}\tDATE: ${recyclingDate}`)
-  return {
+  const result = {
     id: uuidV5(JSON.stringify(payload), '05e2b50f-d55a-4a52-83bc-012f11efcb41'),
     city,
     address: payload,
     garbage: new Date(garbageDate),
     recycling: new Date(recyclingDate)
   }
+  loggers.fetch(result)
+  return result
 }

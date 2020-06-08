@@ -1,29 +1,30 @@
-const fs = require('fs')
-const readline = require('readline')
+const files = require('./files')
 const { google } = require('googleapis')
+const { timeout } = require('./utils')
+const { loggers } = require('./debug')
 
-// If modifying these scopes, delete token.json.
-const SCOPES = [
-  'https://www.googleapis.com/auth/calendar.events',
-  'https://www.googleapis.com/auth/calendar.readonly'
-]
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
-const TOKEN_PATH = 'token.json'
+const {
+  SCOPES,
+  TOKEN_PATH,
+  CODE_PATH,
+} = require('./config')
 
 module.exports = auth
+
 async function auth() {
   const creds = await readCredentials()
   const auth = createClient(creds)
-  await authorize(creds, auth)
+  await authorize(auth)
   return auth
 }
 
 async function readCredentials() {
   // Load client secrets from a local file.
-  const file = await fs.promises.readFile('credentials.json')
-  return JSON.parse(file)
+  // const file = await files.read('credentials.json')
+  return JSON.parse(process.env.CREDENTIALS)
 }
 
 function createClient(credentials) {
@@ -39,10 +40,10 @@ function createClient(credentials) {
  * @param {Object} credentials The authorization client credentials.
  * @param {function} callback The callback to call with the authorized client.
  */
-async function authorize(credentials, oAuth2Client) {
+async function authorize(oAuth2Client) {
   // Check if we have previously stored a token.
   try {
-    const token = JSON.parse(await fs.promises.readFile(TOKEN_PATH))
+    const token = JSON.parse(await files.read(TOKEN_PATH))
     oAuth2Client.setCredentials(token)
   } catch (e) {
     await getAccessToken(oAuth2Client)
@@ -65,25 +66,24 @@ async function getAccessToken(oAuth2Client) {
   while (!code) {
     await timeout(1000)
     try {
-      const file = await fs.promises.readFile('./code.txt')
-      code = file.toString()
+      const file = await files.read(CODE_PATH)
+      code = file
     } catch (e) {}
   }
-  console.log('got code:', code)
   return new Promise((resolve, reject) => {
     oAuth2Client.getToken(code, async (err, token) => {
       if (err) {
-        console.error('Error retrieving access token', err)
+        loggers.auth({ message: 'Error retrieving access token', err })
         return reject(err)
       }
       oAuth2Client.setCredentials(token)
       // Store the token to disk for later program executions
       try {
-        await fs.promises.writeFile(TOKEN_PATH, JSON.stringify(token))
-        console.log('Token stored to', TOKEN_PATH)
+        await files.write(TOKEN_PATH, JSON.stringify(token))
+        loggers.auth(`Token stored to ${TOKEN_PATH}`)
         resolve()
       } catch (err) {
-        console.error(err)
+        loggers.auth(err)
         reject(err)
       }
     })
