@@ -19,6 +19,12 @@ async function main(address) {
   const { id, timeZone } = garbageCalendar
   const { items: events } = await listEvents(calendar, id)
   const nextPickups = await fetch(address)
+  const eventsToCreate = collectEvents(events, nextPickups, timeZone)
+  await insertMissingEvents(calendar, id, eventsToCreate)
+  return nextPickups
+}
+
+function collectEvents(events, nextPickups, timeZone) {
   const garbageIsOnCalendar = checkIsOnCalendar(events, nextPickups, 'garbage')
   const recyclingIsOnCalendar = checkIsOnCalendar(events, nextPickups, 'recycling')
   const eventsToCreate = []
@@ -50,8 +56,7 @@ async function main(address) {
       })
     }
   }
-  await insertMissingEvents(calendar, id, eventsToCreate)
-  return nextPickups
+  return eventsToCreate
 }
 
 function checkIsOnCalendar (events, pickupDates, key) {
@@ -70,8 +75,8 @@ async function insertMissingEvents(calendar, id, events) {
     timeZone,
     description
   }) => {
-    const start = new Date(adjustTimezone(+date - (6 * HOUR), timeZone))
-    const end = new Date(adjustTimezone(+date + (9 * HOUR), timeZone))
+    const start = new Date(adjustTimezone(date - (6 * HOUR), timeZone))
+    const end = new Date(adjustTimezone(date + (9 * HOUR), timeZone))
     const payload = {
       calendarId: id,
       resource: {
