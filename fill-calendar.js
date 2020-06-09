@@ -75,8 +75,8 @@ async function insertMissingEvents(calendar, id, events) {
     timeZone,
     description
   }) => {
-    const start = new Date(adjustTimezone(date - (6 * HOUR), timeZone))
-    const end = new Date(adjustTimezone(date + (9 * HOUR), timeZone))
+    const start = new Date(+date - (6 * HOUR))
+    const end = new Date(+date + (9 * HOUR))
     const payload = {
       calendarId: id,
       resource: {
