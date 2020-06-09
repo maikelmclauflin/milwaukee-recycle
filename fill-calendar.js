@@ -61,6 +61,7 @@ function collectEvents(events, nextPickups, timeZone) {
 
 function checkIsOnCalendar (events, pickupDates, key) {
   return !!events.find(({ summary, start, end }) => {
+    loggers.fillCalendar(start.dateTime, pickupDates[key].date, end.dateTime)
     if (summary.indexOf(key) >= 0) {
       return new Date(start.dateTime) <= pickupDates[key].date && pickupDates[key].date <= new Date(end.dateTime)
     }
