@@ -8,6 +8,7 @@ const { loggers } = require('./debug')
 // time.
 const {
   SCOPES,
+  NODE_ENV,
   TOKEN_PATH,
   CODE_PATH,
 } = require('./config')
