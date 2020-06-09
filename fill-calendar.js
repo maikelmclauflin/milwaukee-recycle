@@ -83,11 +83,11 @@ async function insertMissingEvents(calendar, id, events) {
         summary,
         description,
         start: {
-          dateTime: start.toISOString(),
+          dateTime: start.toISOString().split('Z').join(''),
           timeZone
         },
         end: {
-          dateTime: end.toISOString(),
+          dateTime: end.toISOString().split('Z').join(''),
           timeZone
         }
       }
