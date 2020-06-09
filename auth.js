@@ -29,8 +29,16 @@ async function readCredentials() {
 
 function createClient(credentials) {
   const {client_secret, client_id, redirect_uris} = credentials.web
+  const isLocal = NODE_ENV === 'local'
+  const redirect_uri = redirect_uris.find((uri) => {
+    if (isLocal && uri.indexOf('localhost') > 0) {
+      return uri
+    } else if (!isLocal && uri.indexOf('localhost') === -1) {
+      return uri
+    }
+  })
   const oAuth2Client = new google.auth.OAuth2(
-      client_id, client_secret, redirect_uris[0])
+      client_id, client_secret, redirect_uri)
   return oAuth2Client
 }
 
