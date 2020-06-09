@@ -8,10 +8,12 @@ const redis = debug.extend('redis')
 const fillCalendar = debug.extend('fill-calendar')
 const fetch = debug.extend('fetch')
 const auth = debug.extend('auth')
+const server = debug.extend('server')
 const handling = debug.extend('handling')
 const loggers = {
   redis,
   auth,
+  server,
   fetch,
   handling,
   fillCalendar

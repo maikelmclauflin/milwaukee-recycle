@@ -1,6 +1,7 @@
 const express = require('express')
 const request = require('request')
 const files = require('./files')
+const { loggers } = require('./debug')
 const { CODE_PATH, PORT, HOST } = require('./config')
 const app = express()
 const bodyParser = require('body-parser')
@@ -17,7 +18,7 @@ app.listen(PORT, (err) => {
   if (err) {
     return console.error(err)
   }
-  console.log(`listening: ${PORT}`)
+  loggers.server(`listening: ${PORT}`)
   worker()
   setInterval(worker, 30000)
 })

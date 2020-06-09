@@ -4,5 +4,5 @@ const fetch = require('../fetch')
 main().catch(console.error)
 
 async function main() {
-  console.log(await fetch(argv.address))
+  await fetch(argv.address)
 }

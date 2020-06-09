@@ -2,6 +2,9 @@ const { google } = require('googleapis')
 const { loggers } = require('./debug')
 const auth = require('./auth')
 const fetch = require('./fetch')
+const timezoneOffset = {
+  'America/Chicago': 300,
+}
 module.exports = main
 
 async function main(address) {
@@ -19,13 +22,13 @@ async function main(address) {
   const garbageIsOnCalendar = checkIsOnCalendar(events, nextPickups, 'garbage')
   const recyclingIsOnCalendar = checkIsOnCalendar(events, nextPickups, 'recycling')
   const eventsToCreate = []
-  if (+nextPickups.garbage === +nextPickups.recycling) {
+  if (+nextPickups.garbage.date === +nextPickups.recycling.date) {
     // event should be joined
     if (!garbageIsOnCalendar) {
       eventsToCreate.push({
         summary: 'garbage + recycling',
         description: 'Pull the garbage and recycling to the curb',
-        date: nextPickups.garbage,
+        date: nextPickups.garbage.date,
         timeZone
       })
     }
@@ -34,7 +37,7 @@ async function main(address) {
       eventsToCreate.push({
         summary: 'garbage',
         description: 'Pull the garbage to the curb',
-        date: nextPickups.garbage,
+        date: nextPickups.garbage.date,
         timeZone
       })
     }
@@ -42,7 +45,7 @@ async function main(address) {
       eventsToCreate.push({
         summary: 'recycling',
         description: 'Pull the recycling to the curb',
-        date: nextPickups.recycling,
+        date: nextPickups.recycling.date,
         timeZone
       })
     }
@@ -54,7 +57,7 @@ async function main(address) {
 function checkIsOnCalendar (events, pickupDates, key) {
   return !!events.find(({ summary, start, end }) => {
     if (summary.indexOf(key) >= 0) {
-      return new Date(start.dateTime) <= pickupDates[key] && pickupDates[key] <= new Date(end.dateTime)
+      return new Date(start.dateTime) <= pickupDates[key].date && pickupDates[key].date <= new Date(end.dateTime)
     }
   })
 }
@@ -67,8 +70,8 @@ async function insertMissingEvents(calendar, id, events) {
     timeZone,
     description
   }) => {
-    const start = new Date(+date - (6 * HOUR))
-    const end = new Date(+date + (9 * HOUR))
+    const start = new Date(adjustTimezone(+date - (6 * HOUR), timeZone))
+    const end = new Date(adjustTimezone(+date + (9 * HOUR), timeZone))
     const payload = {
       calendarId: id,
       resource: {
@@ -87,6 +90,10 @@ async function insertMissingEvents(calendar, id, events) {
     loggers.fillCalendar(payload)
     return calendar.events.insert(payload)
   }))
+}
+
+function adjustTimezone (d, timeZone) {
+  return new Date(+d + ((new Date()).getTimezoneOffset()) * 60)
 }
 
 /**
@@ -124,7 +131,7 @@ function listEvents(calendar, id) {
       orderBy: 'startTime',
     }, (err, res) => {
       if (err) {
-        console.log('The API returned an error: ' + err)
+        loggers.fillCalendar('The API returned an error: ' + err)
         return reject(err)
       }
       resolve(res.data)

@@ -61,7 +61,7 @@ async function getAccessToken(oAuth2Client) {
     access_type: 'offline',
     scope: SCOPES,
   })
-  console.log('Authorize this app by visiting this url:', authUrl)
+  loggers.auth('Authorize this app by visiting this url:', authUrl)
   let code
   while (!code) {
     await timeout(1000)

@@ -14,7 +14,7 @@ async function read(key) {
   return value
 }
 
-async function write(key, value) {
+async function write(key, value, options = []) {
   const client = await connect()
-  await client.setAsync(key, value)
+  await client.setAsync([key, value].concat(options))
 }
