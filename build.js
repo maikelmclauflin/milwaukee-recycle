@@ -10,6 +10,6 @@ async function main() {
     return
   }
   await fillCalendar(process.env.ADDRESS)
-  const ttl = HOUR - now % HOUR
-  await files.write('last-build', choppedTime, ['EX', ttl])
+  const ttl = Math.round((HOUR - (+now % HOUR)) / 1000)
+  await files.write('last-build', now.toISOString(), ['EX', ttl])
 }

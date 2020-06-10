@@ -2,6 +2,7 @@ const { google } = require('googleapis')
 const { loggers } = require('./debug')
 const auth = require('./auth')
 const fetch = require('./fetch')
+const DAY = 24 * 60 * 60 * 1000
 const timezoneOffset = {
   'America/Chicago': 300,
 }
@@ -60,8 +61,8 @@ function collectEvents(events, nextPickups, timeZone) {
 }
 
 function checkIsOnCalendar (events, pickupDates, key) {
+  
   return !!events.find(({ summary, start, end }) => {
-    loggers.fillCalendar(start.dateTime, pickupDates[key].date, end.dateTime)
     if (summary.indexOf(key) >= 0) {
       return new Date(start.dateTime) <= pickupDates[key].date && pickupDates[key].date <= new Date(end.dateTime)
     }
@@ -84,11 +85,11 @@ async function insertMissingEvents(calendar, id, events) {
         summary,
         description,
         start: {
-          dateTime: start.toISOString().split('Z').join(''),
+          dateTime: start.toISOString(),
           timeZone
         },
         end: {
-          dateTime: end.toISOString().split('Z').join(''),
+          dateTime: end.toISOString(),
           timeZone
         }
       }
@@ -129,9 +130,10 @@ function getCalendar(calendar, calendarId) {
 
 function listEvents(calendar, id) {
   return new Promise((resolve, reject) => {
+    const now = new Date()
     calendar.events.list({
       calendarId: id,
-      timeMin: (new Date()).toISOString(),
+      timeMin: new Date(now - (now % DAY) - DAY).toISOString(),
       maxResults: 10,
       singleEvents: true,
       orderBy: 'startTime',

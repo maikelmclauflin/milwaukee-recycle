@@ -3,7 +3,7 @@ const {
   PORT = 8080,
   DEBUG,
   HOST = 'localhost:8080',
-  REDIS_URL
+  REDIS_URL = 'redis://localhost:6379'
 } = process.env
 const TOKEN_PATH = 'token.json'
 const CODE_PATH = 'code.txt'
