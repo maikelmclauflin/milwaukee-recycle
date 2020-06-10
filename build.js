@@ -6,10 +6,10 @@ module.exports = main
 async function main() {
   const lastBuild = await files.read('last-build')
   const now = new Date()
-  if (lastBuild && new Date(+lastBuild) > (now - HOUR)) {
+  if (lastBuild) {
     return
   }
   await fillCalendar(process.env.ADDRESS)
   const choppedTime = now - (now % HOUR)
-  await files.write('last-build', choppedTime, ['EX', 600])
+  await files.write('last-build', choppedTime, ['EX', 3600])
 }
